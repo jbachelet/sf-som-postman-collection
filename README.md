@@ -90,6 +90,21 @@ The order placement use cases are the following:
 4. Reuse the two products previously created in the setup, within the same order delivery group
 5. One order-level promotion
 
+### :new: Order summary
+
+#### :hash: Order Summary creation
+
+1. Reuses the last inserted order ID, and calls the Salesforce API to create an order summary from it
+2. It uses the `order_summary_lifecycle` environment variable to either create a `MANAGED` or `UNMANAGED` order summary
+
+### :new: Fulfillment order
+
+#### :hash: Use case 01
+
+1. One single Fulfillment order created for the given order summary
+2. All order item summaries added to this single fulfillment order
+3. Uses the first location found that matches the location type `location_type` environment variable
+
 ## :rocket: How to?
 
 ### How to use the collection?
