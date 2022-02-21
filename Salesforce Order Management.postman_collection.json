@@ -758,6 +758,79 @@
 					"response": []
 				},
 				{
+					"name": "Insert Product 1 Price Entry",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201', () => {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.success;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test('Validate the response and saves the PricebookEntry Id in the collection variables', () => {",
+									"    const data = pm.response.json();",
+									"    pm.expect(data.id).to.exist;",
+									"    pm.expect(data.id).to.be.a.string;",
+									"    pm.expect(data.success).to.exist;",
+									"    pm.expect(data.success).to.be.true;",
+									"",
+									"    pm.collectionVariables.set('_order_product1_pricebook_entry_id', data.id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{_authorization_key}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"Product2Id\": \"{{_order_product1_id}}\",\n    \"Pricebook2Id\": \"{{_pricebook_id}}\",\n    \"UnitPrice\": \"{{order_product1_price}}\",\n    \"IsActive\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{_instance_url}}/services/data/v{{version}}/sobjects/PricebookEntry",
+							"host": [
+								"{{_instance_url}}"
+							],
+							"path": [
+								"services",
+								"data",
+								"v{{version}}",
+								"sobjects",
+								"PricebookEntry"
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Insert Product 2",
 					"event": [
 						{
@@ -825,6 +898,79 @@
 								"v{{version}}",
 								"sobjects",
 								"Product2"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Insert Product 2 Price Entry",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test('Status code is 201', () => {",
+									"    pm.response.to.have.status(201);",
+									"});",
+									"",
+									"pm.test('Response is valid and has a JSON body', () => {",
+									"     pm.response.to.be.success;",
+									"     pm.response.to.be.withBody;",
+									"     pm.response.to.be.json;",
+									"});",
+									"",
+									"pm.test('Validate the response and saves the PricebookEntry Id in the collection variables', () => {",
+									"    const data = pm.response.json();",
+									"    pm.expect(data.id).to.exist;",
+									"    pm.expect(data.id).to.be.a.string;",
+									"    pm.expect(data.success).to.exist;",
+									"    pm.expect(data.success).to.be.true;",
+									"",
+									"    pm.collectionVariables.set('_order_product2_pricebook_entry_id', data.id);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "{{_authorization_key}}",
+								"type": "text"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"Product2Id\": \"{{_order_product2_id}}\",\n    \"ProductCode\": \"{{order_product2_code}}\",\n    \"Pricebook2Id\": \"{{_pricebook_id}}\",\n    \"UnitPrice\": \"{{order_product2_price}}\",\n    \"IsActive\": true\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{_instance_url}}/services/data/v{{version}}/sobjects/PricebookEntry",
+							"host": [
+								"{{_instance_url}}"
+							],
+							"path": [
+								"services",
+								"data",
+								"v{{version}}",
+								"sobjects",
+								"PricebookEntry"
 							]
 						}
 					},
@@ -1216,6 +1362,286 @@
 							"response": []
 						},
 						{
+							"name": "Retrieve Product 1",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Order Product 1 Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.be.greaterThan(0);",
+											"    const orderProduct = data.records[0];",
+											"    pm.expect(orderProduct.Id).to.exist;",
+											"    pm.expect(orderProduct.Id).to.be.a.string;",
+											"",
+											"    pm.collectionVariables.set('_order_product1_id', orderProduct.Id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id+FROM+Product2+WHERE+StockKeepingUnit+=+'{{order_product1_sku}}'+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id+FROM+Product2+WHERE+StockKeepingUnit+=+'{{order_product1_sku}}'+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Product1 Price",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Order PriceEntry Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.be.greaterThan(0);",
+											"    const orderProductPriceEntry = data.records[0];",
+											"    pm.expect(orderProductPriceEntry.Id).to.exist;",
+											"    pm.expect(orderProductPriceEntry.Id).to.be.a.string;",
+											"    pm.expect(orderProductPriceEntry.UnitPrice).to.exist;",
+											"",
+											"    pm.collectionVariables.set('_order_product1_pricebook_entry_id', orderProductPriceEntry.Id);",
+											"    pm.collectionVariables.set('_order_product1_pricebook_entry_unit_price', orderProductPriceEntry.UnitPrice);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id,+UnitPrice+FROM+PricebookEntry+WHERE+Product2Id+=+'{{_order_product1_id}}'+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id,+UnitPrice+FROM+PricebookEntry+WHERE+Product2Id+=+'{{_order_product1_id}}'+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Product 2",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Order Product 2 Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.be.greaterThan(0);",
+											"    const orderProduct = data.records[0];",
+											"    pm.expect(orderProduct.Id).to.exist;",
+											"    pm.expect(orderProduct.Id).to.be.a.string;",
+											"",
+											"    pm.collectionVariables.set('_order_product2_id', orderProduct.Id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id+FROM+Product2+WHERE+StockKeepingUnit+=+'{{order_product2_sku}}'+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id+FROM+Product2+WHERE+StockKeepingUnit+=+'{{order_product2_sku}}'+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Product2 Price",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Order PriceEntry Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.be.greaterThan(0);",
+											"    const orderProductPriceEntry = data.records[0];",
+											"    pm.expect(orderProductPriceEntry.Id).to.exist;",
+											"    pm.expect(orderProductPriceEntry.Id).to.be.a.string;",
+											"    pm.expect(orderProductPriceEntry.UnitPrice).to.exist;",
+											"",
+											"    pm.collectionVariables.set('_order_product2_pricebook_entry_id', orderProductPriceEntry.Id);",
+											"    pm.collectionVariables.set('_order_product2_pricebook_entry_unit_price', orderProductPriceEntry.UnitPrice);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id,+UnitPrice+FROM+PricebookEntry+WHERE+Product2Id+=+'{{_order_product1_id}}'+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id,+UnitPrice+FROM+PricebookEntry+WHERE+Product2Id+=+'{{_order_product1_id}}'+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
 							"name": "Retrieve Latest Order matching sequence number pattern (if any configured)",
 							"event": [
 								{
@@ -1412,7 +1838,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n\t\"allOrNone\": true,\n\t\"compositeRequest\": [{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/sobjects/Account\",\n\t\t\t\"referenceId\": \"refAccount\",\n\t\t\t\"body\": {\n\t\t\t\t\"FirstName\": \"{{order_account_firstname}}\",\n\t\t\t\t\"LastName\": \"{{order_account_lastname}}\",\n\t\t\t\t\"PersonEmail\": \"{{order_account_email}}\",\n\t\t\t\t\"BillingStreet\": \"{{order_billing_address}}\",\n\t\t\t\t\"BillingCity\": \"{{order_billing_city}}\",\n\t\t\t\t\"BillingPostalCode\": \"{{order_billing_postal_code}}\",\n\t\t\t\t\"BillingState\": \"{{order_billing_state}}\",\n\t\t\t\t\"BillingCountry\": \"{{order_billing_country}}\",\n\t\t\t\t\"Phone\": \"{{order_billing_phone}}\"\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/sobjects/Order\",\n\t\t\t\"referenceId\": \"refOrder\",\n\t\t\t\"body\": {\n\t\t\t\t\"Pricebook2Id\": \"{{_pricebook_id}}\",\n\t\t\t\t\"Name\": \"{{order_account_firstname}} {{order_account_lastname}}\",\n\t\t\t\t\"Status\": \"Draft\",\n\t\t\t\t\"EffectiveDate\": \"{{_today}}\",\n\t\t\t\t\"OrderReferenceNumber\": \"{{_order_reference_number}}\",\n\t\t\t\t\"BillingStreet\": \"{{order_billing_address}}\",\n\t\t\t\t\"BillingCity\": \"{{order_billing_city}}\",\n\t\t\t\t\"BillingPostalCode\": \"{{order_billing_postal_code}}\",\n\t\t\t\t\"BillingState\": \"{{order_billing_state}}\",\n\t\t\t\t\"BillingCountry\": \"{{order_billing_country}}\",\n\t\t\t\t\"BillingPhoneNumber\": \"{{order_billing_phone}}\",\n\t\t\t\t\"OrderedDate\": \"{{_now}}\",\n\t\t\t\t\"BillingEmailAddress\": \"{{order_account_email}}\",\n\t\t\t\t\"AccountId\": \"@{refAccount.id}\",\n\t\t\t\t\"SalesChannelId\": \"{{_sales_channel_id}}\",\n                \"TaxLocaleType\": \"{{order_tax_locale_type}}\"\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/sobjects/PaymentGroup\",\n\t\t\t\"referenceId\": \"refPaymentGroup\",\n\t\t\t\"body\": {\n\t\t\t\t\"SourceObjectId\": \"@{refOrder.id}\"\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/composite/sobjects\",\n\t\t\t\"referenceId\": \"refGroup0\",\n\t\t\t\"body\": {\n\t\t\t\t\"allOrNone\": true,\n\t\t\t\t\"records\": [{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"Product2\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Description\": \"{{order_product1_name}}\",\n\t\t\t\t\t\t\"Name\": \"{{order_product1_name}}\",\n\t\t\t\t\t\t\"StockKeepingUnit\": \"{{order_product1_sku}}\",\n\t\t\t\t\t\t\"ProductCode\": \"{{order_product1_code}}\",\n\t\t\t\t\t\t\"IsActive\": true\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"Product2\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Description\": \"{{order_product2_name}}\",\n\t\t\t\t\t\t\"Name\": \"{{order_product2_name}}\",\n\t\t\t\t\t\t\"StockKeepingUnit\": \"{{order_product2_sku}}\",\n\t\t\t\t\t\t\"ProductCode\": \"{{order_product2_code}}\",\n\t\t\t\t\t\t\"IsActive\": true\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"CardPaymentMethod\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"CardType\": \"Visa\",\n\t\t\t\t\t\t\"CardHolderName\": \"{{order_account_firstname}} {{order_account_lastname}}\",\n\t\t\t\t\t\t\"ExpiryYear\": \"{{_credit_card_expiry_year}}\",\n\t\t\t\t\t\t\"ExpiryMonth\": \"{{_credit_card_expiry_month}}\",\n\t\t\t\t\t\t\"CardCategory\": \"CreditCard\",\n\t\t\t\t\t\t\"Status\": \"Active\",\n\t\t\t\t\t\t\"AccountId\": \"@{refAccount.id}\",\n\t\t\t\t\t\t\"ProcessingMode\": \"External\"\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/composite/sobjects\",\n\t\t\t\"referenceId\": \"refGroup1\",\n\t\t\t\"body\": {\n\t\t\t\t\"allOrNone\": true,\n\t\t\t\t\"records\": [{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"PricebookEntry\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Pricebook2Id\": \"{{_pricebook_id}}\",\n\t\t\t\t\t\t\"UnitPrice\": {{order_product1_price}},\n\t\t\t\t\t\t\"Product2Id\": \"@{refGroup0[0].id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"PricebookEntry\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Pricebook2Id\": \"{{_pricebook_id}}\",\n\t\t\t\t\t\t\"UnitPrice\": {{order_product2_price}},\n\t\t\t\t\t\t\"Product2Id\": \"@{refGroup0[1].id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderDeliveryGroup\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"EmailAddress\": \"{{order_account_email}}\",\n\t\t\t\t\t\t\"DeliverToCity\": \"{{order_shipping1_city}}\",\n\t\t\t\t\t\t\"DeliverToCountry\": \"{{order_shipping1_country}}\",\n\t\t\t\t\t\t\"DeliverToName\": \"{{order_account_firstname}} {{order_account_lastname}}\",\n\t\t\t\t\t\t\"DeliverToPostalCode\": \"{{order_shipping1_postal_code}}\",\n\t\t\t\t\t\t\"DeliverToState\": \"{{order_shipping1_state}}\",\n\t\t\t\t\t\t\"DeliverToStreet\": \"{{order_shipping1_address}}\",\n\t\t\t\t\t\t\"PhoneNumber\": \"{{order_shipping1_phone}}\",\n\t\t\t\t\t\t\"OrderDeliveryMethodId\": \"{{_order_delivery_method_id}}\",\n\t\t\t\t\t\t\"OrderId\": \"@{refOrder.id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"PaymentAuthorization\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Amount\": {{_order_total_amount}},\n\t\t\t\t\t\t\"ProcessingMode\": \"External\",\n\t\t\t\t\t\t\"Status\": \"Processed\",\n\t\t\t\t\t\t\"PaymentGroupId\": \"@{refPaymentGroup.id}\",\n\t\t\t\t\t\t\"AccountId\": \"@{refAccount.id}\",\n\t\t\t\t\t\t\"PaymentMethodId\": \"@{refGroup0[2].id}\"\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/composite/sobjects\",\n\t\t\t\"referenceId\": \"refGroup2\",\n\t\t\t\"body\": {\n\t\t\t\t\"allOrNone\": true,\n\t\t\t\t\"records\": [{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderItem\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Description\": \"{{order_product1_name}}\",\n\t\t\t\t\t\t\"Type\": \"Order Product\",\n\t\t\t\t\t\t\"Quantity\": 1,\n\t\t\t\t\t\t\"TotalLineAmount\": {{order_product1_price}},\n\t\t\t\t\t\t\"LineNumber\": 1,\n\t\t\t\t\t\t\"UnitPrice\": {{order_product1_price}},\n\t\t\t\t\t\t\"OrderId\": \"@{refOrder.id}\",\n\t\t\t\t\t\t\"OrderDeliveryGroupId\": \"@{refGroup1[2].id}\",\n\t\t\t\t\t\t\"PricebookEntryId\": \"@{refGroup1[0].id}\",\n\t\t\t\t\t\t\"Product2Id\": \"@{refGroup0[0].id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderItem\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Description\": \"{{order_product2_name}}\",\n\t\t\t\t\t\t\"Type\": \"Order Product\",\n\t\t\t\t\t\t\"Quantity\": 1,\n\t\t\t\t\t\t\"TotalLineAmount\": {{order_product2_price}},\n\t\t\t\t\t\t\"LineNumber\": 2,\n\t\t\t\t\t\t\"UnitPrice\": {{order_product2_price}},\n\t\t\t\t\t\t\"OrderId\": \"@{refOrder.id}\",\n\t\t\t\t\t\t\"OrderDeliveryGroupId\": \"@{refGroup1[2].id}\",\n\t\t\t\t\t\t\"PricebookEntryId\": \"@{refGroup1[1].id}\",\n\t\t\t\t\t\t\"Product2Id\": \"@{refGroup0[1].id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderItem\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Description\": \"Shipping\",\n\t\t\t\t\t\t\"Product2Id\": \"{{_order_delivery_method_product_id}}\",\n\t\t\t\t\t\t\"Type\": \"Delivery Charge\",\n\t\t\t\t\t\t\"Quantity\": 1,\n\t\t\t\t\t\t\"TotalLineAmount\": {{_order_delivery_method_product_pricebook_entry_unit_price}},\n\t\t\t\t\t\t\"LineNumber\": 1000,\n\t\t\t\t\t\t\"UnitPrice\": {{_order_delivery_method_product_pricebook_entry_unit_price}},\n\t\t\t\t\t\t\"PricebookEntryId\": \"{{_order_delivery_method_product_pricebook_entry_id}}\",\n\t\t\t\t\t\t\"OrderId\": \"@{refOrder.id}\",\n\t\t\t\t\t\t\"OrderDeliveryGroupId\": \"@{refGroup1[2].id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"PaymentGatewayLog\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"InteractionStatus\": \"Success\",\n\t\t\t\t\t\t\"InteractionType\": \"Authorization\",\n\t\t\t\t\t\t\"ReferencedEntityId\": \"@{refGroup1[3].id}\"\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/composite/sobjects\",\n\t\t\t\"referenceId\": \"refGroup3\",\n\t\t\t\"body\": {\n\t\t\t\t\"allOrNone\": true,\n\t\t\t\t\"records\": [{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderItemTaxLineItem\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Name\": \"{{order_product1_code}} - Tax\",\n\t\t\t\t\t\t\"Type\": \"Estimated\",\n\t\t\t\t\t\t\"Amount\": {{_order_product1_tax_amount}},\n\t\t\t\t\t\t\"Rate\": {{order_tax_rate}},\n\t\t\t\t\t\t\"TaxEffectiveDate\": \"{{_now}}\",\n\t\t\t\t\t\t\"OrderItemId\": \"@{refGroup2[0].id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderItemTaxLineItem\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Name\": \"{{order_product2_code}} - Tax\",\n\t\t\t\t\t\t\"Type\": \"Estimated\",\n\t\t\t\t\t\t\"Amount\": {{_order_product2_tax_amount}},\n\t\t\t\t\t\t\"Rate\": {{order_tax_rate}},\n\t\t\t\t\t\t\"TaxEffectiveDate\": \"{{_now}}\",\n\t\t\t\t\t\t\"OrderItemId\": \"@{refGroup2[1].id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderItemTaxLineItem\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Name\": \"DeliveryCharge - Tax\",\n\t\t\t\t\t\t\"Type\": \"Estimated\",\n\t\t\t\t\t\t\"Amount\": {{_order_delivery_tax_amount}},\n\t\t\t\t\t\t\"Rate\": {{order_tax_rate}},\n\t\t\t\t\t\t\"TaxEffectiveDate\": \"{{_now}}\",\n\t\t\t\t\t\t\"OrderItemId\": \"@{refGroup2[2].id}\"\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"PATCH\",\n\t\t\t\"url\": \"/services/data/v{{version}}/sobjects/Order/@{refOrder.id}\",\n\t\t\t\"referenceId\": \"refUpdateOrder\",\n\t\t\t\"body\": {\n\t\t\t\t\"Status\": \"Activated\"\n\t\t\t}\n\t\t}\n\t]\n}"
+									"raw": "{\n\t\"allOrNone\": true,\n\t\"compositeRequest\": [{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/sobjects/Account\",\n\t\t\t\"referenceId\": \"refAccount\",\n\t\t\t\"body\": {\n\t\t\t\t\"FirstName\": \"{{order_account_firstname}}\",\n\t\t\t\t\"LastName\": \"{{order_account_lastname}}\",\n\t\t\t\t\"PersonEmail\": \"{{order_account_email}}\",\n\t\t\t\t\"BillingStreet\": \"{{order_billing_address}}\",\n\t\t\t\t\"BillingCity\": \"{{order_billing_city}}\",\n\t\t\t\t\"BillingPostalCode\": \"{{order_billing_postal_code}}\",\n\t\t\t\t\"BillingState\": \"{{order_billing_state}}\",\n\t\t\t\t\"BillingCountry\": \"{{order_billing_country}}\",\n\t\t\t\t\"Phone\": \"{{order_billing_phone}}\"\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/sobjects/Order\",\n\t\t\t\"referenceId\": \"refOrder\",\n\t\t\t\"body\": {\n\t\t\t\t\"Pricebook2Id\": \"{{_pricebook_id}}\",\n\t\t\t\t\"Name\": \"{{order_account_firstname}} {{order_account_lastname}}\",\n\t\t\t\t\"Status\": \"Draft\",\n\t\t\t\t\"EffectiveDate\": \"{{_today}}\",\n\t\t\t\t\"OrderReferenceNumber\": \"{{_order_reference_number}}\",\n\t\t\t\t\"BillingStreet\": \"{{order_billing_address}}\",\n\t\t\t\t\"BillingCity\": \"{{order_billing_city}}\",\n\t\t\t\t\"BillingPostalCode\": \"{{order_billing_postal_code}}\",\n\t\t\t\t\"BillingState\": \"{{order_billing_state}}\",\n\t\t\t\t\"BillingCountry\": \"{{order_billing_country}}\",\n\t\t\t\t\"BillingPhoneNumber\": \"{{order_billing_phone}}\",\n\t\t\t\t\"OrderedDate\": \"{{_now}}\",\n\t\t\t\t\"BillingEmailAddress\": \"{{order_account_email}}\",\n\t\t\t\t\"AccountId\": \"@{refAccount.id}\",\n\t\t\t\t\"SalesChannelId\": \"{{_sales_channel_id}}\",\n                \"TaxLocaleType\": \"{{order_tax_locale_type}}\"\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/sobjects/PaymentGroup\",\n\t\t\t\"referenceId\": \"refPaymentGroup\",\n\t\t\t\"body\": {\n\t\t\t\t\"SourceObjectId\": \"@{refOrder.id}\"\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/composite/sobjects\",\n\t\t\t\"referenceId\": \"refGroup0\",\n\t\t\t\"body\": {\n\t\t\t\t\"allOrNone\": true,\n\t\t\t\t\"records\": [{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"CardPaymentMethod\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"CardType\": \"Visa\",\n\t\t\t\t\t\t\"CardHolderName\": \"{{order_account_firstname}} {{order_account_lastname}}\",\n\t\t\t\t\t\t\"ExpiryYear\": \"{{_credit_card_expiry_year}}\",\n\t\t\t\t\t\t\"ExpiryMonth\": \"{{_credit_card_expiry_month}}\",\n\t\t\t\t\t\t\"CardCategory\": \"CreditCard\",\n\t\t\t\t\t\t\"Status\": \"Active\",\n\t\t\t\t\t\t\"AccountId\": \"@{refAccount.id}\",\n\t\t\t\t\t\t\"ProcessingMode\": \"External\"\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/composite/sobjects\",\n\t\t\t\"referenceId\": \"refGroup1\",\n\t\t\t\"body\": {\n\t\t\t\t\"allOrNone\": true,\n\t\t\t\t\"records\": [{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderDeliveryGroup\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"EmailAddress\": \"{{order_account_email}}\",\n\t\t\t\t\t\t\"DeliverToCity\": \"{{order_shipping1_city}}\",\n\t\t\t\t\t\t\"DeliverToCountry\": \"{{order_shipping1_country}}\",\n\t\t\t\t\t\t\"DeliverToName\": \"{{order_account_firstname}} {{order_account_lastname}}\",\n\t\t\t\t\t\t\"DeliverToPostalCode\": \"{{order_shipping1_postal_code}}\",\n\t\t\t\t\t\t\"DeliverToState\": \"{{order_shipping1_state}}\",\n\t\t\t\t\t\t\"DeliverToStreet\": \"{{order_shipping1_address}}\",\n\t\t\t\t\t\t\"PhoneNumber\": \"{{order_shipping1_phone}}\",\n\t\t\t\t\t\t\"OrderDeliveryMethodId\": \"{{_order_delivery_method_id}}\",\n\t\t\t\t\t\t\"OrderId\": \"@{refOrder.id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"PaymentAuthorization\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Amount\": {{_order_total_amount}},\n\t\t\t\t\t\t\"ProcessingMode\": \"External\",\n\t\t\t\t\t\t\"Status\": \"Processed\",\n\t\t\t\t\t\t\"PaymentGroupId\": \"@{refPaymentGroup.id}\",\n\t\t\t\t\t\t\"AccountId\": \"@{refAccount.id}\",\n\t\t\t\t\t\t\"PaymentMethodId\": \"@{refGroup0[0].id}\"\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/composite/sobjects\",\n\t\t\t\"referenceId\": \"refGroup2\",\n\t\t\t\"body\": {\n\t\t\t\t\"allOrNone\": true,\n\t\t\t\t\"records\": [{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderItem\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Description\": \"{{order_product1_name}}\",\n\t\t\t\t\t\t\"Type\": \"Order Product\",\n\t\t\t\t\t\t\"Quantity\": 1,\n\t\t\t\t\t\t\"TotalLineAmount\": {{order_product1_price}},\n\t\t\t\t\t\t\"LineNumber\": 1,\n\t\t\t\t\t\t\"UnitPrice\": {{order_product1_price}},\n\t\t\t\t\t\t\"OrderId\": \"@{refOrder.id}\",\n\t\t\t\t\t\t\"OrderDeliveryGroupId\": \"@{refGroup1[0].id}\",\n\t\t\t\t\t\t\"PricebookEntryId\": \"{{_order_product1_pricebook_entry_id}}\",\n\t\t\t\t\t\t\"Product2Id\": \"{{_order_product1_id}}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderItem\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Description\": \"{{order_product2_name}}\",\n\t\t\t\t\t\t\"Type\": \"Order Product\",\n\t\t\t\t\t\t\"Quantity\": 1,\n\t\t\t\t\t\t\"TotalLineAmount\": {{order_product2_price}},\n\t\t\t\t\t\t\"LineNumber\": 2,\n\t\t\t\t\t\t\"UnitPrice\": {{order_product2_price}},\n\t\t\t\t\t\t\"OrderId\": \"@{refOrder.id}\",\n\t\t\t\t\t\t\"OrderDeliveryGroupId\": \"@{refGroup1[0].id}\",\n\t\t\t\t\t\t\"PricebookEntryId\": \"{{_order_product2_pricebook_entry_id}}\",\n\t\t\t\t\t\t\"Product2Id\": \"{{_order_product2_id}}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderItem\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Description\": \"Shipping\",\n\t\t\t\t\t\t\"Product2Id\": \"{{_order_delivery_method_product_id}}\",\n\t\t\t\t\t\t\"Type\": \"Delivery Charge\",\n\t\t\t\t\t\t\"Quantity\": 1,\n\t\t\t\t\t\t\"TotalLineAmount\": {{_order_delivery_method_product_pricebook_entry_unit_price}},\n\t\t\t\t\t\t\"LineNumber\": 1000,\n\t\t\t\t\t\t\"UnitPrice\": {{_order_delivery_method_product_pricebook_entry_unit_price}},\n\t\t\t\t\t\t\"PricebookEntryId\": \"{{_order_delivery_method_product_pricebook_entry_id}}\",\n\t\t\t\t\t\t\"OrderId\": \"@{refOrder.id}\",\n\t\t\t\t\t\t\"OrderDeliveryGroupId\": \"@{refGroup1[0].id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"PaymentGatewayLog\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"InteractionStatus\": \"Success\",\n\t\t\t\t\t\t\"InteractionType\": \"Authorization\",\n\t\t\t\t\t\t\"ReferencedEntityId\": \"@{refGroup1[1].id}\"\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/composite/sobjects\",\n\t\t\t\"referenceId\": \"refGroup3\",\n\t\t\t\"body\": {\n\t\t\t\t\"allOrNone\": true,\n\t\t\t\t\"records\": [{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderItemTaxLineItem\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Name\": \"{{order_product1_code}} - Tax\",\n\t\t\t\t\t\t\"Type\": \"Estimated\",\n\t\t\t\t\t\t\"Amount\": {{_order_product1_tax_amount}},\n\t\t\t\t\t\t\"Rate\": {{order_tax_rate}},\n\t\t\t\t\t\t\"TaxEffectiveDate\": \"{{_now}}\",\n\t\t\t\t\t\t\"OrderItemId\": \"@{refGroup2[0].id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderItemTaxLineItem\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Name\": \"{{order_product2_code}} - Tax\",\n\t\t\t\t\t\t\"Type\": \"Estimated\",\n\t\t\t\t\t\t\"Amount\": {{_order_product2_tax_amount}},\n\t\t\t\t\t\t\"Rate\": {{order_tax_rate}},\n\t\t\t\t\t\t\"TaxEffectiveDate\": \"{{_now}}\",\n\t\t\t\t\t\t\"OrderItemId\": \"@{refGroup2[1].id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderItemTaxLineItem\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Name\": \"DeliveryCharge - Tax\",\n\t\t\t\t\t\t\"Type\": \"Estimated\",\n\t\t\t\t\t\t\"Amount\": {{_order_delivery_tax_amount}},\n\t\t\t\t\t\t\"Rate\": {{order_tax_rate}},\n\t\t\t\t\t\t\"TaxEffectiveDate\": \"{{_now}}\",\n\t\t\t\t\t\t\"OrderItemId\": \"@{refGroup2[2].id}\"\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"PATCH\",\n\t\t\t\"url\": \"/services/data/v{{version}}/sobjects/Order/@{refOrder.id}\",\n\t\t\t\"referenceId\": \"refUpdateOrder\",\n\t\t\t\"body\": {\n\t\t\t\t\"Status\": \"Activated\"\n\t\t\t}\n\t\t}\n\t]\n}"
 								},
 								"url": {
 									"raw": "{{_instance_url}}/services/data/v{{version}}/composite",
@@ -1950,75 +2376,6 @@
 							"response": []
 						},
 						{
-							"name": "Retrieve Product 2",
-							"event": [
-								{
-									"listen": "test",
-									"script": {
-										"exec": [
-											"pm.test('Status code is 200', () => {",
-											"    pm.response.to.have.status(200);",
-											"});",
-											"",
-											"pm.test('Response is valid and has a JSON body', () => {",
-											"     pm.response.to.be.success;",
-											"     pm.response.to.be.withBody;",
-											"     pm.response.to.be.json;",
-											"});",
-											"",
-											"pm.test('Validate the response and saves the Order Product 2 Id in the collection variables', () => {",
-											"    const data = pm.response.json();",
-											"    pm.expect(data.records).to.exist;",
-											"    pm.expect(data.records).to.be.an('array');",
-											"    pm.expect(data.records.length).to.be.greaterThan(0);",
-											"    const orderProduct = data.records[0];",
-											"    pm.expect(orderProduct.Id).to.exist;",
-											"    pm.expect(orderProduct.Id).to.be.a.string;",
-											"",
-											"    pm.collectionVariables.set('_order_product2_id', orderProduct.Id);",
-											"});"
-										],
-										"type": "text/javascript"
-									}
-								}
-							],
-							"request": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Authorization",
-										"value": "{{_authorization_key}}",
-										"type": "text"
-									},
-									{
-										"key": "Content-Type",
-										"value": "application/json",
-										"type": "text"
-									}
-								],
-								"url": {
-									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id+FROM+Product2+WHERE+StockKeepingUnit+=+'{{order_product2_sku}}'+LIMIT+1",
-									"host": [
-										"{{_instance_url}}"
-									],
-									"path": [
-										"services",
-										"data",
-										"v{{version}}",
-										"query",
-										""
-									],
-									"query": [
-										{
-											"key": "q",
-											"value": "SELECT+Id+FROM+Product2+WHERE+StockKeepingUnit+=+'{{order_product2_sku}}'+LIMIT+1"
-										}
-									]
-								}
-							},
-							"response": []
-						},
-						{
 							"name": "Retrieve Product1 Price",
 							"event": [
 								{
@@ -2083,6 +2440,75 @@
 										{
 											"key": "q",
 											"value": "SELECT+Id,+UnitPrice+FROM+PricebookEntry+WHERE+Product2Id+=+'{{_order_product1_id}}'+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Product 2",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Order Product 2 Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.be.greaterThan(0);",
+											"    const orderProduct = data.records[0];",
+											"    pm.expect(orderProduct.Id).to.exist;",
+											"    pm.expect(orderProduct.Id).to.be.a.string;",
+											"",
+											"    pm.collectionVariables.set('_order_product2_id', orderProduct.Id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id+FROM+Product2+WHERE+StockKeepingUnit+=+'{{order_product2_sku}}'+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id+FROM+Product2+WHERE+StockKeepingUnit+=+'{{order_product2_sku}}'+LIMIT+1"
 										}
 									]
 								}
