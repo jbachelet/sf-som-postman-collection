@@ -90,6 +90,24 @@ The order placement use cases are the following:
 4. Reuse the two products previously created in the setup, within the same order delivery group
 5. One order-level promotion
 
+#### :hash: Use case 04
+
+1. One single order insertion
+2. Account insertion (so each time, a new account is created by default)
+3. One single order delivery group, along with its order delivery method
+4. Two products insertion, within the same order delivery group
+5. No promotions
+6. Reserve inventory against the location configured, which need to exist on the org and on OCI
+
+#### :hash: Use case 05
+
+1. One single order insertion
+2. Reuse the account previously created in the setup
+3. One single order delivery group, along with its order delivery method
+4. Reuse the two products previously created in the setup, within the same order delivery group
+5. No promotions
+6. Reserve inventory against the location configured, which need to exist on the org and on OCI
+
 ### :new: Order summary
 
 #### :hash: Order Summary creation

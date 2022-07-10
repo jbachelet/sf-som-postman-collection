@@ -3,7 +3,8 @@
 		"_postman_id": "3eca3336-d9ba-4fe6-a02e-ce8e0e7df9f1",
 		"name": "Salesforce Order Management",
 		"description": "# Salesforce Order Management collection\n\nThis collection contains pre-defined use cases related to the Salesforce Order Management.\n\nThese use cases are the following:\n\n1. Order placement, with different use cases (single vs multiple order delivery groups, order-level promotion or not, account & product creation at order ingestion or not).",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "6732558"
 	},
 	"item": [
 		{
@@ -1761,6 +1762,7 @@
 											"    let orderNumber = parseInt(lastOrderNo.replace(sequenceNumberPattern, ''), 10);",
 											"    if (!isNaN(orderNumber)) {",
 											"        orderNo = `${sequenceNumberPattern}${zeroPad(orderNumber + 1, sequenceNumberPad)}`;",
+											"        pm.collectionVariables.set('_latest_order_reference_number', orderNo);",
 											"    }",
 											"}",
 											"",
@@ -2714,6 +2716,7 @@
 											"    let orderNumber = parseInt(lastOrderNo.replace(sequenceNumberPattern, ''), 10);",
 											"    if (!isNaN(orderNumber)) {",
 											"        orderNo = `${sequenceNumberPattern}${zeroPad(orderNumber + 1, sequenceNumberPad)}`;",
+											"        pm.collectionVariables.set('_latest_order_reference_number', orderNo);",
 											"    }",
 											"}",
 											"",
@@ -3671,6 +3674,7 @@
 											"    let orderNumber = parseInt(lastOrderNo.replace(sequenceNumberPattern, ''), 10);",
 											"    if (!isNaN(orderNumber)) {",
 											"        orderNo = `${sequenceNumberPattern}${zeroPad(orderNumber + 1, sequenceNumberPad)}`;",
+											"        pm.collectionVariables.set('_latest_order_reference_number', orderNo);",
 											"    }",
 											"}",
 											"",
@@ -3779,6 +3783,1983 @@
 						}
 					],
 					"description": "# Order Placement - Use case 3\n\nThis folder contains the required API calls to insert an order.\n\n## Use case details\n\nThis use case covers the following details:\n\n1. One single order insertion\n2. Reuse the account previously created in the setup\n3. Two order delivery groups, along with the same order delivery method, but to two different shipping addresses\n4. Reuse the two products previously created in the setup, within the same order delivery group\n5. One order-level promotion"
+				},
+				{
+					"name": "Order Placement - Use case 4",
+					"item": [
+						{
+							"name": "Authentication against the Salesforce API",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.ok;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the access token is found in the body and save it to the variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.token_type).to.exist;",
+											"    pm.expect(data.token_type).to.be.a.string;",
+											"    pm.expect(data.access_token).to.exist;",
+											"    pm.expect(data.access_token).to.be.a.string;",
+											"    const id = data.id.split('/');",
+											"",
+											"    pm.collectionVariables.set('_authorization_key', `${data.token_type} ${data.access_token}`);",
+											"    pm.collectionVariables.set('_instance_url', data.instance_url);",
+											"    pm.collectionVariables.set('_user_id', id.pop());",
+											"    pm.collectionVariables.set('_org_id', id.pop());",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"// Clean up the variables",
+											"pm.collectionVariables.unset('_authorization_key');"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/x-www-form-urlencoded"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "password",
+											"type": "text"
+										},
+										{
+											"key": "client_id",
+											"value": "{{client_id}}",
+											"type": "text"
+										},
+										{
+											"key": "client_secret",
+											"value": "{{client_secret}}",
+											"type": "text"
+										},
+										{
+											"key": "username",
+											"value": "{{username}}",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": "{{password}}{{security_token}}",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{url}}/services/oauth2/token",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"services",
+										"oauth2",
+										"token"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Sales Channel",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the SalesChannel Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.be.greaterThan(0);",
+											"    const salesChannel = data.records[0];",
+											"    pm.expect(salesChannel.Id).to.exist;",
+											"    pm.expect(salesChannel.Id).to.be.a.string;",
+											"",
+											"    pm.collectionVariables.set('_sales_channel_id', salesChannel.Id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id,+SalesChannelName+FROM+SalesChannel+WHERE+SalesChannelName+=+'{{sales_channel_name}}'+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id,+SalesChannelName+FROM+SalesChannel+WHERE+SalesChannelName+=+'{{sales_channel_name}}'+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Standard Pricebook",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Pricebook Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.be.greaterThan(0);",
+											"    const pricebook = data.records[0];",
+											"    pm.expect(pricebook.Id).to.exist;",
+											"    pm.expect(pricebook.Id).to.be.a.string;",
+											"",
+											"    pm.collectionVariables.set('_pricebook_id', pricebook.Id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id+FROM+Pricebook2+WHERE+Name+=+'{{pricebook_name}}'+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id+FROM+Pricebook2+WHERE+Name+=+'{{pricebook_name}}'+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Order Delivery Method",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Order Delivery Method Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.be.greaterThan(0);",
+											"    const orderDeliveryMethod = data.records[0];",
+											"    pm.expect(orderDeliveryMethod.Id).to.exist;",
+											"    pm.expect(orderDeliveryMethod.Id).to.be.a.string;",
+											"",
+											"    pm.collectionVariables.set('_order_delivery_method_id', orderDeliveryMethod.Id);",
+											"    pm.collectionVariables.set('_order_delivery_method_product_id', orderDeliveryMethod.ProductId);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id,+ProductId+FROM+OrderDeliveryMethod+WHERE+Name+=+'{{order_delivery_method_name}}'+AND+ReferenceNumber+=+'{{order_delivery_method_reference_number}}'+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id,+ProductId+FROM+OrderDeliveryMethod+WHERE+Name+=+'{{order_delivery_method_name}}'+AND+ReferenceNumber+=+'{{order_delivery_method_reference_number}}'+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Order Delivery Method Price",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Order Delivery Method PriceEntry Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.be.greaterThan(0);",
+											"    const orderDeliveryMethodPriceEntry = data.records[0];",
+											"    pm.expect(orderDeliveryMethodPriceEntry.Id).to.exist;",
+											"    pm.expect(orderDeliveryMethodPriceEntry.Id).to.be.a.string;",
+											"    pm.expect(orderDeliveryMethodPriceEntry.UnitPrice).to.exist;",
+											"",
+											"    pm.collectionVariables.set('_order_delivery_method_product_pricebook_entry_id', orderDeliveryMethodPriceEntry.Id);",
+											"    pm.collectionVariables.set('_order_delivery_method_product_pricebook_entry_unit_price', orderDeliveryMethodPriceEntry.UnitPrice);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id,+UnitPrice+FROM+PricebookEntry+WHERE+Product2Id+=+'{{_order_delivery_method_product_id}}'+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id,+UnitPrice+FROM+PricebookEntry+WHERE+Product2Id+=+'{{_order_delivery_method_product_id}}'+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Product 1",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Order Product 1 Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.be.greaterThan(0);",
+											"    const orderProduct = data.records[0];",
+											"    pm.expect(orderProduct.Id).to.exist;",
+											"    pm.expect(orderProduct.Id).to.be.a.string;",
+											"",
+											"    pm.collectionVariables.set('_order_product1_id', orderProduct.Id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id+FROM+Product2+WHERE+StockKeepingUnit+=+'{{order_product1_sku}}'+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id+FROM+Product2+WHERE+StockKeepingUnit+=+'{{order_product1_sku}}'+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Product1 Price",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Order PriceEntry Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.be.greaterThan(0);",
+											"    const orderProductPriceEntry = data.records[0];",
+											"    pm.expect(orderProductPriceEntry.Id).to.exist;",
+											"    pm.expect(orderProductPriceEntry.Id).to.be.a.string;",
+											"    pm.expect(orderProductPriceEntry.UnitPrice).to.exist;",
+											"",
+											"    pm.collectionVariables.set('_order_product1_pricebook_entry_id', orderProductPriceEntry.Id);",
+											"    pm.collectionVariables.set('_order_product1_pricebook_entry_unit_price', orderProductPriceEntry.UnitPrice);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id,+UnitPrice+FROM+PricebookEntry+WHERE+Product2Id+=+'{{_order_product1_id}}'+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id,+UnitPrice+FROM+PricebookEntry+WHERE+Product2Id+=+'{{_order_product1_id}}'+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Product 2",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Order Product 2 Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.be.greaterThan(0);",
+											"    const orderProduct = data.records[0];",
+											"    pm.expect(orderProduct.Id).to.exist;",
+											"    pm.expect(orderProduct.Id).to.be.a.string;",
+											"",
+											"    pm.collectionVariables.set('_order_product2_id', orderProduct.Id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id+FROM+Product2+WHERE+StockKeepingUnit+=+'{{order_product2_sku}}'+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id+FROM+Product2+WHERE+StockKeepingUnit+=+'{{order_product2_sku}}'+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Product2 Price",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Order PriceEntry Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.be.greaterThan(0);",
+											"    const orderProductPriceEntry = data.records[0];",
+											"    pm.expect(orderProductPriceEntry.Id).to.exist;",
+											"    pm.expect(orderProductPriceEntry.Id).to.be.a.string;",
+											"    pm.expect(orderProductPriceEntry.UnitPrice).to.exist;",
+											"",
+											"    pm.collectionVariables.set('_order_product2_pricebook_entry_id', orderProductPriceEntry.Id);",
+											"    pm.collectionVariables.set('_order_product2_pricebook_entry_unit_price', orderProductPriceEntry.UnitPrice);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id,+UnitPrice+FROM+PricebookEntry+WHERE+Product2Id+=+'{{_order_product1_id}}'+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id,+UnitPrice+FROM+PricebookEntry+WHERE+Product2Id+=+'{{_order_product1_id}}'+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Location",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Location Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.be.greaterThan(0);",
+											"    const location = data.records[0];",
+											"    pm.expect(location.Id).to.exist;",
+											"    pm.expect(location.Id).to.be.a.string;",
+											"",
+											"    pm.collectionVariables.set('_location_id', location.Id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id+FROM+Location+WHERE+Name+=+'{{location_name}}'+AND+LocationType+=+'{{location_type}}'+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id+FROM+Location+WHERE+Name+=+'{{location_name}}'+AND+LocationType+=+'{{location_type}}'+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Latest Order matching sequence number pattern (if any configured)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Order Reference number in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"",
+											"    if (data.records.length > 0) {",
+											"        const order = data.records[0];",
+											"        pm.expect(order.Id).to.exist;",
+											"        pm.expect(order.Id).to.be.a.string;",
+											"        pm.expect(order.OrderReferenceNumber).to.exist;",
+											"        pm.expect(order.OrderReferenceNumber).to.be.a.string;",
+											"",
+											"        pm.collectionVariables.set('_latest_order_reference_number', order.OrderReferenceNumber);",
+											"    } else {",
+											"        const sequenceNumberPattern = pm.environment.get('order_number_sequence_pattern');",
+											"        if (sequenceNumberPattern) {",
+											"            pm.collectionVariables.set('_latest_order_reference_number', sequenceNumberPattern.replace('{0}', '0'));",
+											"        } else {",
+											"            pm.collectionVariables.set('_latest_order_reference_number', null);",
+											"        }",
+											"    }",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"const sequenceNumberPattern = pm.environment.get('order_number_sequence_pattern');",
+											"if (sequenceNumberPattern) {",
+											"    pm.collectionVariables.set('_order_number_sequence_pattern', sequenceNumberPattern.replace('{0}', '%25'));",
+											"} else {",
+											"    // Putting a fake value makes the query returning no results, and so will ask the next request to generate a UUID number",
+											"    pm.collectionVariables.set('_order_number_sequence_pattern', 'EMPTY_PATTERN');",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id,+OrderReferenceNumber+FROM+Order+WHERE+OrderReferenceNumber+LIKE+'{{_order_number_sequence_pattern}}'+ORDER+BY+OrderedDate+DESC+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id,+OrderReferenceNumber+FROM+Order+WHERE+OrderReferenceNumber+LIKE+'{{_order_number_sequence_pattern}}'+ORDER+BY+OrderedDate+DESC+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Insert Order with related records",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"const today = new Date();",
+											"let month = today.getMonth() + 1;",
+											"month = ('' + month).length === 1 ? '0' + month : month;",
+											"",
+											"const product1Price = parseFloat(pm.environment.get('order_product1_price'));",
+											"const product2Price = parseFloat(pm.environment.get('order_product2_price'));",
+											"const product1TaxPrice = Math.round((product1Price * pm.environment.get('order_tax_rate')) * 100) * -1 / 100;",
+											"const product2TaxPrice = Math.round((product2Price * pm.environment.get('order_tax_rate')) * 100) * -1 / 100;",
+											"const orderDeliveryTaxPrice = Math.round((pm.collectionVariables.get('_order_delivery_method_product_pricebook_entry_unit_price') * pm.environment.get('order_tax_rate')) * 100) * -1 / 100;",
+											"const lastOrderNo = pm.collectionVariables.get('_latest_order_reference_number');",
+											"",
+											"let orderNo = uuidv4();",
+											"if (lastOrderNo) {",
+											"    const sequenceNumberPattern = pm.environment.get('order_number_sequence_pattern').replace('{0}', '');",
+											"    const sequenceNumberPad = parseInt(pm.environment.get('order_number_sequence_pad'), 10);",
+											"    let orderNumber = parseInt(lastOrderNo.replace(sequenceNumberPattern, ''), 10);",
+											"    if (!isNaN(orderNumber)) {",
+											"        orderNo = `${sequenceNumberPattern}${zeroPad(orderNumber + 1, sequenceNumberPad)}`;",
+											"        pm.collectionVariables.set('_latest_order_reference_number', orderNo);",
+											"    }",
+											"}",
+											"",
+											"pm.collectionVariables.set('_today', `${today.getFullYear()}-${month}-${today.getDate()}`);",
+											"pm.collectionVariables.set('_now', `${today.toISOString()}`);",
+											"pm.collectionVariables.set('_credit_card_expiry_year', `${today.getFullYear() + 4}`);",
+											"pm.collectionVariables.set('_credit_card_expiry_month', `${today.getMonth() + 1}`);",
+											"pm.collectionVariables.set('_order_reference_number', orderNo);",
+											"pm.collectionVariables.set('_order_total_amount', product1Price + product2Price);",
+											"pm.collectionVariables.set('_order_product1_tax_amount', product1TaxPrice);",
+											"pm.collectionVariables.set('_order_product2_tax_amount', product2TaxPrice);",
+											"pm.collectionVariables.set('_order_delivery_tax_amount', orderDeliveryTaxPrice);",
+											"",
+											"// Generates a valid UUID v4 as per RFC4122: https://www.ietf.org/rfc/rfc4122.txt",
+											"function uuidv4() {",
+											"  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {",
+											"    let r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);",
+											"    return v.toString(16);",
+											"  });",
+											"}",
+											"",
+											"function zeroPad(num, places) {",
+											"    return String(num).padStart(places, '0');",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Order Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.compositeResponse).to.exist;",
+											"    pm.expect(data.compositeResponse).to.be.an('array');",
+											"    ",
+											"    // As \"allOrNone\" is true in the request, we should have all sub requests as succeed",
+											"    const allAreSuccessfull = data.compositeResponse.every(compositeSubResponse => {",
+											"        return [200, 201, 204].indexOf(compositeSubResponse.httpStatusCode) > -1;",
+											"    });",
+											"    pm.expect(allAreSuccessfull).to.be.true;",
+											"    ",
+											"    const orderSubResponse = data.compositeResponse.find(compositeSubResponse => compositeSubResponse.referenceId === 'refOrder');",
+											"    pm.expect(orderSubResponse).to.be.an('object');",
+											"    pm.expect(orderSubResponse.body).to.exist;",
+											"    pm.expect(orderSubResponse.body).to.be.an('object');",
+											"    pm.expect(orderSubResponse.body.success).to.exist;",
+											"    pm.expect(orderSubResponse.body.success).to.be.true;",
+											"    pm.expect(orderSubResponse.body.id).to.exist;",
+											"    pm.expect(orderSubResponse.body.id).to.be.a.string;",
+											"",
+											"    pm.collectionVariables.set('_order_id', orderSubResponse.body.id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "{{_authorization_key}}"
+									},
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"allOrNone\": true,\n\t\"compositeRequest\": [{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/sobjects/Account\",\n\t\t\t\"referenceId\": \"refAccount\",\n\t\t\t\"body\": {\n\t\t\t\t\"FirstName\": \"{{order_account_firstname}}\",\n\t\t\t\t\"LastName\": \"{{order_account_lastname}}\",\n\t\t\t\t\"PersonEmail\": \"{{order_account_email}}\",\n\t\t\t\t\"BillingStreet\": \"{{order_billing_address}}\",\n\t\t\t\t\"BillingCity\": \"{{order_billing_city}}\",\n\t\t\t\t\"BillingPostalCode\": \"{{order_billing_postal_code}}\",\n\t\t\t\t\"BillingState\": \"{{order_billing_state}}\",\n\t\t\t\t\"BillingCountry\": \"{{order_billing_country}}\",\n\t\t\t\t\"Phone\": \"{{order_billing_phone}}\"\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/sobjects/Order\",\n\t\t\t\"referenceId\": \"refOrder\",\n\t\t\t\"body\": {\n\t\t\t\t\"Pricebook2Id\": \"{{_pricebook_id}}\",\n\t\t\t\t\"Name\": \"{{order_account_firstname}} {{order_account_lastname}}\",\n\t\t\t\t\"Status\": \"Draft\",\n\t\t\t\t\"EffectiveDate\": \"{{_today}}\",\n\t\t\t\t\"OrderReferenceNumber\": \"{{_order_reference_number}}\",\n\t\t\t\t\"BillingStreet\": \"{{order_billing_address}}\",\n\t\t\t\t\"BillingCity\": \"{{order_billing_city}}\",\n\t\t\t\t\"BillingPostalCode\": \"{{order_billing_postal_code}}\",\n\t\t\t\t\"BillingState\": \"{{order_billing_state}}\",\n\t\t\t\t\"BillingCountry\": \"{{order_billing_country}}\",\n\t\t\t\t\"BillingPhoneNumber\": \"{{order_billing_phone}}\",\n\t\t\t\t\"OrderedDate\": \"{{_now}}\",\n\t\t\t\t\"BillingEmailAddress\": \"{{order_account_email}}\",\n\t\t\t\t\"AccountId\": \"@{refAccount.id}\",\n\t\t\t\t\"SalesChannelId\": \"{{_sales_channel_id}}\",\n                \"TaxLocaleType\": \"{{order_tax_locale_type}}\"\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/sobjects/PaymentGroup\",\n\t\t\t\"referenceId\": \"refPaymentGroup\",\n\t\t\t\"body\": {\n\t\t\t\t\"SourceObjectId\": \"@{refOrder.id}\"\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/composite/sobjects\",\n\t\t\t\"referenceId\": \"refGroup0\",\n\t\t\t\"body\": {\n\t\t\t\t\"allOrNone\": true,\n\t\t\t\t\"records\": [{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"CardPaymentMethod\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"CardType\": \"Visa\",\n\t\t\t\t\t\t\"CardHolderName\": \"{{order_account_firstname}} {{order_account_lastname}}\",\n\t\t\t\t\t\t\"ExpiryYear\": \"{{_credit_card_expiry_year}}\",\n\t\t\t\t\t\t\"ExpiryMonth\": \"{{_credit_card_expiry_month}}\",\n\t\t\t\t\t\t\"CardCategory\": \"CreditCard\",\n\t\t\t\t\t\t\"Status\": \"Active\",\n\t\t\t\t\t\t\"AccountId\": \"@{refAccount.id}\",\n\t\t\t\t\t\t\"ProcessingMode\": \"External\"\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/composite/sobjects\",\n\t\t\t\"referenceId\": \"refGroup1\",\n\t\t\t\"body\": {\n\t\t\t\t\"allOrNone\": true,\n\t\t\t\t\"records\": [{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderDeliveryGroup\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"EmailAddress\": \"{{order_account_email}}\",\n\t\t\t\t\t\t\"DeliverToCity\": \"{{order_shipping1_city}}\",\n\t\t\t\t\t\t\"DeliverToCountry\": \"{{order_shipping1_country}}\",\n\t\t\t\t\t\t\"DeliverToName\": \"{{order_account_firstname}} {{order_account_lastname}}\",\n\t\t\t\t\t\t\"DeliverToPostalCode\": \"{{order_shipping1_postal_code}}\",\n\t\t\t\t\t\t\"DeliverToState\": \"{{order_shipping1_state}}\",\n\t\t\t\t\t\t\"DeliverToStreet\": \"{{order_shipping1_address}}\",\n\t\t\t\t\t\t\"PhoneNumber\": \"{{order_shipping1_phone}}\",\n\t\t\t\t\t\t\"OrderDeliveryMethodId\": \"{{_order_delivery_method_id}}\",\n\t\t\t\t\t\t\"OrderId\": \"@{refOrder.id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"PaymentAuthorization\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Amount\": {{_order_total_amount}},\n\t\t\t\t\t\t\"ProcessingMode\": \"External\",\n\t\t\t\t\t\t\"Status\": \"Processed\",\n\t\t\t\t\t\t\"PaymentGroupId\": \"@{refPaymentGroup.id}\",\n\t\t\t\t\t\t\"AccountId\": \"@{refAccount.id}\",\n\t\t\t\t\t\t\"PaymentMethodId\": \"@{refGroup0[0].id}\"\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/composite/sobjects\",\n\t\t\t\"referenceId\": \"refGroup2\",\n\t\t\t\"body\": {\n\t\t\t\t\"allOrNone\": true,\n\t\t\t\t\"records\": [{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderItem\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Description\": \"{{order_product1_name}}\",\n\t\t\t\t\t\t\"Type\": \"Order Product\",\n\t\t\t\t\t\t\"Quantity\": 1,\n\t\t\t\t\t\t\"TotalLineAmount\": {{order_product1_price}},\n\t\t\t\t\t\t\"LineNumber\": 1,\n\t\t\t\t\t\t\"UnitPrice\": {{order_product1_price}},\n\t\t\t\t\t\t\"OrderId\": \"@{refOrder.id}\",\n\t\t\t\t\t\t\"OrderDeliveryGroupId\": \"@{refGroup1[0].id}\",\n\t\t\t\t\t\t\"PricebookEntryId\": \"{{_order_product1_pricebook_entry_id}}\",\n\t\t\t\t\t\t\"Product2Id\": \"{{_order_product1_id}}\",\n                        \"ReservedAtLocationId\": \"{{_location_id}}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderItem\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Description\": \"{{order_product2_name}}\",\n\t\t\t\t\t\t\"Type\": \"Order Product\",\n\t\t\t\t\t\t\"Quantity\": 1,\n\t\t\t\t\t\t\"TotalLineAmount\": {{order_product2_price}},\n\t\t\t\t\t\t\"LineNumber\": 2,\n\t\t\t\t\t\t\"UnitPrice\": {{order_product2_price}},\n\t\t\t\t\t\t\"OrderId\": \"@{refOrder.id}\",\n\t\t\t\t\t\t\"OrderDeliveryGroupId\": \"@{refGroup1[0].id}\",\n\t\t\t\t\t\t\"PricebookEntryId\": \"{{_order_product2_pricebook_entry_id}}\",\n\t\t\t\t\t\t\"Product2Id\": \"{{_order_product2_id}}\",\n                        \"ReservedAtLocationId\": \"{{_location_id}}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderItem\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Description\": \"Shipping\",\n\t\t\t\t\t\t\"Product2Id\": \"{{_order_delivery_method_product_id}}\",\n\t\t\t\t\t\t\"Type\": \"Delivery Charge\",\n\t\t\t\t\t\t\"Quantity\": 1,\n\t\t\t\t\t\t\"TotalLineAmount\": {{_order_delivery_method_product_pricebook_entry_unit_price}},\n\t\t\t\t\t\t\"LineNumber\": 1000,\n\t\t\t\t\t\t\"UnitPrice\": {{_order_delivery_method_product_pricebook_entry_unit_price}},\n\t\t\t\t\t\t\"PricebookEntryId\": \"{{_order_delivery_method_product_pricebook_entry_id}}\",\n\t\t\t\t\t\t\"OrderId\": \"@{refOrder.id}\",\n\t\t\t\t\t\t\"OrderDeliveryGroupId\": \"@{refGroup1[0].id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"PaymentGatewayLog\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"InteractionStatus\": \"Success\",\n\t\t\t\t\t\t\"InteractionType\": \"Authorization\",\n\t\t\t\t\t\t\"ReferencedEntityId\": \"@{refGroup1[1].id}\"\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/composite/sobjects\",\n\t\t\t\"referenceId\": \"refGroup3\",\n\t\t\t\"body\": {\n\t\t\t\t\"allOrNone\": true,\n\t\t\t\t\"records\": [{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderItemTaxLineItem\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Name\": \"{{order_product1_code}} - Tax\",\n\t\t\t\t\t\t\"Type\": \"Estimated\",\n\t\t\t\t\t\t\"Amount\": {{_order_product1_tax_amount}},\n\t\t\t\t\t\t\"Rate\": {{order_tax_rate}},\n\t\t\t\t\t\t\"TaxEffectiveDate\": \"{{_now}}\",\n\t\t\t\t\t\t\"OrderItemId\": \"@{refGroup2[0].id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderItemTaxLineItem\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Name\": \"{{order_product2_code}} - Tax\",\n\t\t\t\t\t\t\"Type\": \"Estimated\",\n\t\t\t\t\t\t\"Amount\": {{_order_product2_tax_amount}},\n\t\t\t\t\t\t\"Rate\": {{order_tax_rate}},\n\t\t\t\t\t\t\"TaxEffectiveDate\": \"{{_now}}\",\n\t\t\t\t\t\t\"OrderItemId\": \"@{refGroup2[1].id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderItemTaxLineItem\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Name\": \"DeliveryCharge - Tax\",\n\t\t\t\t\t\t\"Type\": \"Estimated\",\n\t\t\t\t\t\t\"Amount\": {{_order_delivery_tax_amount}},\n\t\t\t\t\t\t\"Rate\": {{order_tax_rate}},\n\t\t\t\t\t\t\"TaxEffectiveDate\": \"{{_now}}\",\n\t\t\t\t\t\t\"OrderItemId\": \"@{refGroup2[2].id}\"\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"PATCH\",\n\t\t\t\"url\": \"/services/data/v{{version}}/sobjects/Order/@{refOrder.id}\",\n\t\t\t\"referenceId\": \"refUpdateOrder\",\n\t\t\t\"body\": {\n\t\t\t\t\"Status\": \"Activated\"\n\t\t\t}\n\t\t}\n\t]\n}"
+								},
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/composite",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"composite"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"description": "# Order Placement - Use case 4\n\nThis folder contains the required API calls to insert an order.\n\n## Use case details\n\nThis use case covers the following details:\n\n1.  One single order insertion\n2.  Account insertion (so each time, a new account is created by default)\n3.  One single order delivery group, along with its order delivery method\n4.  Two products insertion, within the same order delivery group\n5.  No promotions\n6.  Reserve inventory against the location configured, which need to exist on the org and on OCI"
+				},
+				{
+					"name": "Order Placement - Use case 5",
+					"item": [
+						{
+							"name": "Authentication against the Salesforce API",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.ok;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the access token is found in the body and save it to the variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.token_type).to.exist;",
+											"    pm.expect(data.token_type).to.be.a.string;",
+											"    pm.expect(data.access_token).to.exist;",
+											"    pm.expect(data.access_token).to.be.a.string;",
+											"    const id = data.id.split('/');",
+											"",
+											"    pm.collectionVariables.set('_authorization_key', `${data.token_type} ${data.access_token}`);",
+											"    pm.collectionVariables.set('_instance_url', data.instance_url);",
+											"    pm.collectionVariables.set('_user_id', id.pop());",
+											"    pm.collectionVariables.set('_org_id', id.pop());",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"// Clean up the variables",
+											"pm.collectionVariables.unset('_authorization_key');"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/x-www-form-urlencoded"
+									}
+								],
+								"body": {
+									"mode": "urlencoded",
+									"urlencoded": [
+										{
+											"key": "grant_type",
+											"value": "password",
+											"type": "text"
+										},
+										{
+											"key": "client_id",
+											"value": "{{client_id}}",
+											"type": "text"
+										},
+										{
+											"key": "client_secret",
+											"value": "{{client_secret}}",
+											"type": "text"
+										},
+										{
+											"key": "username",
+											"value": "{{username}}",
+											"type": "text"
+										},
+										{
+											"key": "password",
+											"value": "{{password}}{{security_token}}",
+											"type": "text"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{url}}/services/oauth2/token",
+									"host": [
+										"{{url}}"
+									],
+									"path": [
+										"services",
+										"oauth2",
+										"token"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Sales Channel",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the SalesChannel Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.be.greaterThan(0);",
+											"    const salesChannel = data.records[0];",
+											"    pm.expect(salesChannel.Id).to.exist;",
+											"    pm.expect(salesChannel.Id).to.be.a.string;",
+											"",
+											"    pm.collectionVariables.set('_sales_channel_id', salesChannel.Id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id,+SalesChannelName+FROM+SalesChannel+WHERE+SalesChannelName+=+'{{sales_channel_name}}'+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id,+SalesChannelName+FROM+SalesChannel+WHERE+SalesChannelName+=+'{{sales_channel_name}}'+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Standard Pricebook",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Pricebook Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.be.greaterThan(0);",
+											"    const pricebook = data.records[0];",
+											"    pm.expect(pricebook.Id).to.exist;",
+											"    pm.expect(pricebook.Id).to.be.a.string;",
+											"",
+											"    pm.collectionVariables.set('_pricebook_id', pricebook.Id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id+FROM+Pricebook2+WHERE+Name+=+'{{pricebook_name}}'+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id+FROM+Pricebook2+WHERE+Name+=+'{{pricebook_name}}'+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Order Delivery Method",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Order Delivery Method Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.be.greaterThan(0);",
+											"    const orderDeliveryMethod = data.records[0];",
+											"    pm.expect(orderDeliveryMethod.Id).to.exist;",
+											"    pm.expect(orderDeliveryMethod.Id).to.be.a.string;",
+											"",
+											"    pm.collectionVariables.set('_order_delivery_method_id', orderDeliveryMethod.Id);",
+											"    pm.collectionVariables.set('_order_delivery_method_product_id', orderDeliveryMethod.ProductId);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id,+ProductId+FROM+OrderDeliveryMethod+WHERE+Name+=+'{{order_delivery_method_name}}'+AND+ReferenceNumber+=+'{{order_delivery_method_reference_number}}'+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id,+ProductId+FROM+OrderDeliveryMethod+WHERE+Name+=+'{{order_delivery_method_name}}'+AND+ReferenceNumber+=+'{{order_delivery_method_reference_number}}'+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Order Delivery Method Price",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Order Delivery Method PriceEntry Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.be.greaterThan(0);",
+											"    const orderDeliveryMethodPriceEntry = data.records[0];",
+											"    pm.expect(orderDeliveryMethodPriceEntry.Id).to.exist;",
+											"    pm.expect(orderDeliveryMethodPriceEntry.Id).to.be.a.string;",
+											"    pm.expect(orderDeliveryMethodPriceEntry.UnitPrice).to.exist;",
+											"",
+											"    pm.collectionVariables.set('_order_delivery_method_product_pricebook_entry_id', orderDeliveryMethodPriceEntry.Id);",
+											"    pm.collectionVariables.set('_order_delivery_method_product_pricebook_entry_unit_price', orderDeliveryMethodPriceEntry.UnitPrice);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id,+UnitPrice+FROM+PricebookEntry+WHERE+Product2Id+=+'{{_order_delivery_method_product_id}}'+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id,+UnitPrice+FROM+PricebookEntry+WHERE+Product2Id+=+'{{_order_delivery_method_product_id}}'+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Account",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Order Delivery Method PriceEntry Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.be.greaterThan(0);",
+											"    const orderAccount = data.records[0];",
+											"    pm.expect(orderAccount.Id).to.exist;",
+											"    pm.expect(orderAccount.Id).to.be.a.string;",
+											"",
+											"    pm.collectionVariables.set('_order_account_id', orderAccount.Id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id+FROM+Account+WHERE+PersonEmail+=+'{{order_account_email}}'+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id+FROM+Account+WHERE+PersonEmail+=+'{{order_account_email}}'+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Product 1",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Order Product 1 Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.be.greaterThan(0);",
+											"    const orderProduct = data.records[0];",
+											"    pm.expect(orderProduct.Id).to.exist;",
+											"    pm.expect(orderProduct.Id).to.be.a.string;",
+											"",
+											"    pm.collectionVariables.set('_order_product1_id', orderProduct.Id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id+FROM+Product2+WHERE+StockKeepingUnit+=+'{{order_product1_sku}}'+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id+FROM+Product2+WHERE+StockKeepingUnit+=+'{{order_product1_sku}}'+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Product1 Price",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Order PriceEntry Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.be.greaterThan(0);",
+											"    const orderProductPriceEntry = data.records[0];",
+											"    pm.expect(orderProductPriceEntry.Id).to.exist;",
+											"    pm.expect(orderProductPriceEntry.Id).to.be.a.string;",
+											"    pm.expect(orderProductPriceEntry.UnitPrice).to.exist;",
+											"",
+											"    pm.collectionVariables.set('_order_product1_pricebook_entry_id', orderProductPriceEntry.Id);",
+											"    pm.collectionVariables.set('_order_product1_pricebook_entry_unit_price', orderProductPriceEntry.UnitPrice);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id,+UnitPrice+FROM+PricebookEntry+WHERE+Product2Id+=+'{{_order_product1_id}}'+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id,+UnitPrice+FROM+PricebookEntry+WHERE+Product2Id+=+'{{_order_product1_id}}'+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Product 2",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Order Product 2 Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.be.greaterThan(0);",
+											"    const orderProduct = data.records[0];",
+											"    pm.expect(orderProduct.Id).to.exist;",
+											"    pm.expect(orderProduct.Id).to.be.a.string;",
+											"",
+											"    pm.collectionVariables.set('_order_product2_id', orderProduct.Id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id+FROM+Product2+WHERE+StockKeepingUnit+=+'{{order_product2_sku}}'+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id+FROM+Product2+WHERE+StockKeepingUnit+=+'{{order_product2_sku}}'+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Product2 Price",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Order PriceEntry Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.be.greaterThan(0);",
+											"    const orderProductPriceEntry = data.records[0];",
+											"    pm.expect(orderProductPriceEntry.Id).to.exist;",
+											"    pm.expect(orderProductPriceEntry.Id).to.be.a.string;",
+											"    pm.expect(orderProductPriceEntry.UnitPrice).to.exist;",
+											"",
+											"    pm.collectionVariables.set('_order_product2_pricebook_entry_id', orderProductPriceEntry.Id);",
+											"    pm.collectionVariables.set('_order_product2_pricebook_entry_unit_price', orderProductPriceEntry.UnitPrice);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id,+UnitPrice+FROM+PricebookEntry+WHERE+Product2Id+=+'{{_order_product1_id}}'+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id,+UnitPrice+FROM+PricebookEntry+WHERE+Product2Id+=+'{{_order_product1_id}}'+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Location",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Location Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"    pm.expect(data.records.length).to.be.greaterThan(0);",
+											"    const location = data.records[0];",
+											"    pm.expect(location.Id).to.exist;",
+											"    pm.expect(location.Id).to.be.a.string;",
+											"",
+											"    pm.collectionVariables.set('_location_id', location.Id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id+FROM+Location+WHERE+Name+=+'{{location_name}}'+AND+LocationType+=+'{{location_type}}'+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id+FROM+Location+WHERE+Name+=+'{{location_name}}'+AND+LocationType+=+'{{location_type}}'+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Retrieve Latest Order matching sequence number pattern (if any configured)",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Order Reference number in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.records).to.exist;",
+											"    pm.expect(data.records).to.be.an('array');",
+											"",
+											"    if (data.records.length > 0) {",
+											"        const order = data.records[0];",
+											"        pm.expect(order.Id).to.exist;",
+											"        pm.expect(order.Id).to.be.a.string;",
+											"        pm.expect(order.OrderReferenceNumber).to.exist;",
+											"        pm.expect(order.OrderReferenceNumber).to.be.a.string;",
+											"",
+											"        pm.collectionVariables.set('_latest_order_reference_number', order.OrderReferenceNumber);",
+											"    } else {",
+											"        const sequenceNumberPattern = pm.environment.get('order_number_sequence_pattern');",
+											"        if (sequenceNumberPattern) {",
+											"            pm.collectionVariables.set('_latest_order_reference_number', sequenceNumberPattern.replace('{0}', '0'));",
+											"        } else {",
+											"            pm.collectionVariables.set('_latest_order_reference_number', null);",
+											"        }",
+											"    }",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"const sequenceNumberPattern = pm.environment.get('order_number_sequence_pattern');",
+											"if (sequenceNumberPattern) {",
+											"    pm.collectionVariables.set('_order_number_sequence_pattern', sequenceNumberPattern.replace('{0}', '%25'));",
+											"} else {",
+											"    // Putting a fake value makes the query returning no results, and so will ask the next request to generate a UUID number",
+											"    pm.collectionVariables.set('_order_number_sequence_pattern', 'EMPTY_PATTERN');",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [
+									{
+										"key": "Authorization",
+										"value": "{{_authorization_key}}",
+										"type": "text"
+									},
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/query/?q=SELECT+Id,+OrderReferenceNumber+FROM+Order+WHERE+OrderReferenceNumber+LIKE+'{{_order_number_sequence_pattern}}'+ORDER+BY+OrderedDate+DESC+LIMIT+1",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"query",
+										""
+									],
+									"query": [
+										{
+											"key": "q",
+											"value": "SELECT+Id,+OrderReferenceNumber+FROM+Order+WHERE+OrderReferenceNumber+LIKE+'{{_order_number_sequence_pattern}}'+ORDER+BY+OrderedDate+DESC+LIMIT+1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Insert Order with related records",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"const today = new Date();",
+											"let month = today.getMonth() + 1;",
+											"month = ('' + month).length === 1 ? '0' + month : month;",
+											"",
+											"const product1Price = parseFloat(pm.environment.get('order_product1_price'));",
+											"const product2Price = parseFloat(pm.environment.get('order_product2_price'));",
+											"const product1TaxPrice = Math.round((product1Price * pm.environment.get('order_tax_rate')) * 100) * -1 / 100;",
+											"const product2TaxPrice = Math.round((product2Price * pm.environment.get('order_tax_rate')) * 100) * -1 / 100;",
+											"const orderDeliveryTaxPrice = Math.round((pm.collectionVariables.get('_order_delivery_method_product_pricebook_entry_unit_price') * pm.environment.get('order_tax_rate')) * 100) * -1 / 100;",
+											"const lastOrderNo = pm.collectionVariables.get('_latest_order_reference_number');",
+											"",
+											"let orderNo = uuidv4();",
+											"if (lastOrderNo) {",
+											"    const sequenceNumberPattern = pm.environment.get('order_number_sequence_pattern').replace('{0}', '');",
+											"    const sequenceNumberPad = parseInt(pm.environment.get('order_number_sequence_pad'), 10);",
+											"    let orderNumber = parseInt(lastOrderNo.replace(sequenceNumberPattern, ''), 10);",
+											"    if (!isNaN(orderNumber)) {",
+											"        orderNo = `${sequenceNumberPattern}${zeroPad(orderNumber + 1, sequenceNumberPad)}`;",
+											"        pm.collectionVariables.set('_latest_order_reference_number', orderNo);",
+											"    }",
+											"}",
+											"",
+											"pm.collectionVariables.set('_today', `${today.getFullYear()}-${month}-${today.getDate()}`);",
+											"pm.collectionVariables.set('_now', `${today.toISOString()}`);",
+											"pm.collectionVariables.set('_credit_card_expiry_year', `${today.getFullYear() + 4}`);",
+											"pm.collectionVariables.set('_credit_card_expiry_month', `${today.getMonth() + 1}`);",
+											"pm.collectionVariables.set('_order_reference_number', orderNo);",
+											"pm.collectionVariables.set('_order_total_amount', product1Price + product2Price);",
+											"pm.collectionVariables.set('_order_product1_tax_amount', product1TaxPrice);",
+											"pm.collectionVariables.set('_order_product2_tax_amount', product2TaxPrice);",
+											"pm.collectionVariables.set('_order_delivery_tax_amount', orderDeliveryTaxPrice);",
+											"",
+											"// Generates a valid UUID v4 as per RFC4122: https://www.ietf.org/rfc/rfc4122.txt",
+											"function uuidv4() {",
+											"  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {",
+											"    let r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);",
+											"    return v.toString(16);",
+											"  });",
+											"}",
+											"",
+											"function zeroPad(num, places) {",
+											"    return String(num).padStart(places, '0');",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"pm.test('Status code is 200', () => {",
+											"    pm.response.to.have.status(200);",
+											"});",
+											"",
+											"pm.test('Response is valid and has a JSON body', () => {",
+											"     pm.response.to.be.success;",
+											"     pm.response.to.be.withBody;",
+											"     pm.response.to.be.json;",
+											"});",
+											"",
+											"pm.test('Validate the response and saves the Order Id in the collection variables', () => {",
+											"    const data = pm.response.json();",
+											"    pm.expect(data.compositeResponse).to.exist;",
+											"    pm.expect(data.compositeResponse).to.be.an('array');",
+											"    ",
+											"    // As \"allOrNone\" is true in the request, we should have all sub requests as succeed",
+											"    const allAreSuccessfull = data.compositeResponse.every(compositeSubResponse => {",
+											"        return [200, 201, 204].indexOf(compositeSubResponse.httpStatusCode) > -1;",
+											"    });",
+											"    pm.expect(allAreSuccessfull).to.be.true;",
+											"    ",
+											"    const orderSubResponse = data.compositeResponse.find(compositeSubResponse => compositeSubResponse.referenceId === 'refOrder');",
+											"    pm.expect(orderSubResponse).to.be.an('object');",
+											"    pm.expect(orderSubResponse.body).to.exist;",
+											"    pm.expect(orderSubResponse.body).to.be.an('object');",
+											"    pm.expect(orderSubResponse.body.success).to.exist;",
+											"    pm.expect(orderSubResponse.body.success).to.be.true;",
+											"    pm.expect(orderSubResponse.body.id).to.exist;",
+											"    pm.expect(orderSubResponse.body.id).to.be.a.string;",
+											"",
+											"    pm.collectionVariables.set('_order_id', orderSubResponse.body.id);",
+											"});"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Authorization",
+										"type": "text",
+										"value": "{{_authorization_key}}"
+									},
+									{
+										"key": "Content-Type",
+										"type": "text",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n\t\"allOrNone\": true,\n\t\"compositeRequest\": [{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/sobjects/Order\",\n\t\t\t\"referenceId\": \"refOrder\",\n\t\t\t\"body\": {\n\t\t\t\t\"Pricebook2Id\": \"{{_pricebook_id}}\",\n\t\t\t\t\"Name\": \"{{order_account_firstname}} {{order_account_lastname}}\",\n\t\t\t\t\"Status\": \"Draft\",\n\t\t\t\t\"EffectiveDate\": \"{{_today}}\",\n\t\t\t\t\"OrderReferenceNumber\": \"{{_order_reference_number}}\",\n\t\t\t\t\"BillingStreet\": \"{{order_billing_address}}\",\n\t\t\t\t\"BillingCity\": \"{{order_billing_city}}\",\n\t\t\t\t\"BillingPostalCode\": \"{{order_billing_postal_code}}\",\n\t\t\t\t\"BillingState\": \"{{order_billing_state}}\",\n\t\t\t\t\"BillingCountry\": \"{{order_billing_country}}\",\n\t\t\t\t\"BillingPhoneNumber\": \"{{order_billing_phone}}\",\n\t\t\t\t\"OrderedDate\": \"{{_now}}\",\n\t\t\t\t\"BillingEmailAddress\": \"{{order_account_email}}\",\n\t\t\t\t\"AccountId\": \"{{_order_account_id}}\",\n\t\t\t\t\"SalesChannelId\": \"{{_sales_channel_id}}\",\n                \"TaxLocaleType\": \"{{order_tax_locale_type}}\"\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/sobjects/PaymentGroup\",\n\t\t\t\"referenceId\": \"refPaymentGroup\",\n\t\t\t\"body\": {\n\t\t\t\t\"SourceObjectId\": \"@{refOrder.id}\"\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/composite/sobjects\",\n\t\t\t\"referenceId\": \"refGroup0\",\n\t\t\t\"body\": {\n\t\t\t\t\"allOrNone\": true,\n\t\t\t\t\"records\": [\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"CardPaymentMethod\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"CardType\": \"Visa\",\n\t\t\t\t\t\t\"CardHolderName\": \"{{order_account_firstname}} {{order_account_lastname}}\",\n\t\t\t\t\t\t\"ExpiryYear\": \"{{_credit_card_expiry_year}}\",\n\t\t\t\t\t\t\"ExpiryMonth\": \"{{_credit_card_expiry_month}}\",\n\t\t\t\t\t\t\"CardCategory\": \"CreditCard\",\n\t\t\t\t\t\t\"Status\": \"Active\",\n\t\t\t\t\t\t\"AccountId\": \"{{_order_account_id}}\",\n\t\t\t\t\t\t\"ProcessingMode\": \"External\"\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/composite/sobjects\",\n\t\t\t\"referenceId\": \"refGroup1\",\n\t\t\t\"body\": {\n\t\t\t\t\"allOrNone\": true,\n\t\t\t\t\"records\": [{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderDeliveryGroup\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"EmailAddress\": \"{{order_account_email}}\",\n\t\t\t\t\t\t\"DeliverToCity\": \"{{order_shipping1_city}}\",\n\t\t\t\t\t\t\"DeliverToCountry\": \"{{order_shipping1_country}}\",\n\t\t\t\t\t\t\"DeliverToName\": \"{{order_account_firstname}} {{order_account_lastname}}\",\n\t\t\t\t\t\t\"DeliverToPostalCode\": \"{{order_shipping1_postal_code}}\",\n\t\t\t\t\t\t\"DeliverToState\": \"{{order_shipping1_state}}\",\n\t\t\t\t\t\t\"DeliverToStreet\": \"{{order_shipping1_address}}\",\n\t\t\t\t\t\t\"PhoneNumber\": \"{{order_shipping1_phone}}\",\n\t\t\t\t\t\t\"OrderDeliveryMethodId\": \"{{_order_delivery_method_id}}\",\n\t\t\t\t\t\t\"OrderId\": \"@{refOrder.id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"PaymentAuthorization\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Amount\": {{_order_total_amount}},\n\t\t\t\t\t\t\"ProcessingMode\": \"External\",\n\t\t\t\t\t\t\"Status\": \"Processed\",\n\t\t\t\t\t\t\"PaymentGroupId\": \"@{refPaymentGroup.id}\",\n\t\t\t\t\t\t\"AccountId\": \"{{_order_account_id}}\",\n\t\t\t\t\t\t\"PaymentMethodId\": \"@{refGroup0[0].id}\"\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/composite/sobjects\",\n\t\t\t\"referenceId\": \"refGroup2\",\n\t\t\t\"body\": {\n\t\t\t\t\"allOrNone\": true,\n\t\t\t\t\"records\": [{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderItem\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Description\": \"{{order_product1_name}}\",\n\t\t\t\t\t\t\"Type\": \"Order Product\",\n\t\t\t\t\t\t\"Quantity\": 1,\n\t\t\t\t\t\t\"TotalLineAmount\": {{order_product1_price}},\n\t\t\t\t\t\t\"LineNumber\": 1,\n\t\t\t\t\t\t\"UnitPrice\": {{order_product1_price}},\n\t\t\t\t\t\t\"OrderId\": \"@{refOrder.id}\",\n\t\t\t\t\t\t\"OrderDeliveryGroupId\": \"@{refGroup1[0].id}\",\n\t\t\t\t\t\t\"PricebookEntryId\": \"{{_order_product1_pricebook_entry_id}}\",\n\t\t\t\t\t\t\"Product2Id\": \"{{_order_product1_id}}\",\n                        \"ReservedAtLocationId\": \"{{_location_id}}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderItem\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Description\": \"{{order_product2_name}}\",\n\t\t\t\t\t\t\"Type\": \"Order Product\",\n\t\t\t\t\t\t\"Quantity\": 1,\n\t\t\t\t\t\t\"TotalLineAmount\": {{order_product2_price}},\n\t\t\t\t\t\t\"LineNumber\": 2,\n\t\t\t\t\t\t\"UnitPrice\": {{order_product2_price}},\n\t\t\t\t\t\t\"OrderId\": \"@{refOrder.id}\",\n\t\t\t\t\t\t\"OrderDeliveryGroupId\": \"@{refGroup1[0].id}\",\n\t\t\t\t\t\t\"PricebookEntryId\": \"{{_order_product2_pricebook_entry_id}}\",\n\t\t\t\t\t\t\"Product2Id\": \"{{_order_product2_id}}\",\n                        \"ReservedAtLocationId\": \"{{_location_id}}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderItem\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Description\": \"Shipping\",\n\t\t\t\t\t\t\"Product2Id\": \"{{_order_delivery_method_product_id}}\",\n\t\t\t\t\t\t\"Type\": \"Delivery Charge\",\n\t\t\t\t\t\t\"Quantity\": 1,\n\t\t\t\t\t\t\"TotalLineAmount\": {{_order_delivery_method_product_pricebook_entry_unit_price}},\n\t\t\t\t\t\t\"LineNumber\": 1000,\n\t\t\t\t\t\t\"UnitPrice\": {{_order_delivery_method_product_pricebook_entry_unit_price}},\n\t\t\t\t\t\t\"PricebookEntryId\": \"{{_order_delivery_method_product_pricebook_entry_id}}\",\n\t\t\t\t\t\t\"OrderId\": \"@{refOrder.id}\",\n\t\t\t\t\t\t\"OrderDeliveryGroupId\": \"@{refGroup1[0].id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"PaymentGatewayLog\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"InteractionStatus\": \"Success\",\n\t\t\t\t\t\t\"InteractionType\": \"Authorization\",\n\t\t\t\t\t\t\"ReferencedEntityId\": \"@{refGroup1[1].id}\"\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"POST\",\n\t\t\t\"url\": \"/services/data/v{{version}}/composite/sobjects\",\n\t\t\t\"referenceId\": \"refGroup3\",\n\t\t\t\"body\": {\n\t\t\t\t\"allOrNone\": true,\n\t\t\t\t\"records\": [{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderItemTaxLineItem\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Name\": \"{{order_product1_code}} - Tax\",\n\t\t\t\t\t\t\"Type\": \"Estimated\",\n\t\t\t\t\t\t\"Amount\": {{_order_product1_tax_amount}},\n\t\t\t\t\t\t\"Rate\": {{order_tax_rate}},\n\t\t\t\t\t\t\"TaxEffectiveDate\": \"{{_now}}\",\n\t\t\t\t\t\t\"OrderItemId\": \"@{refGroup2[0].id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderItemTaxLineItem\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Name\": \"{{order_product2_code}} - Tax\",\n\t\t\t\t\t\t\"Type\": \"Estimated\",\n\t\t\t\t\t\t\"Amount\": {{_order_product2_tax_amount}},\n\t\t\t\t\t\t\"Rate\": {{order_tax_rate}},\n\t\t\t\t\t\t\"TaxEffectiveDate\": \"{{_now}}\",\n\t\t\t\t\t\t\"OrderItemId\": \"@{refGroup2[1].id}\"\n\t\t\t\t\t},\n\t\t\t\t\t{\n\t\t\t\t\t\t\"attributes\": {\n\t\t\t\t\t\t\t\"type\": \"OrderItemTaxLineItem\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\t\"Name\": \"DeliveryCharge - Tax\",\n\t\t\t\t\t\t\"Type\": \"Estimated\",\n\t\t\t\t\t\t\"Amount\": {{_order_delivery_tax_amount}},\n\t\t\t\t\t\t\"Rate\": {{order_tax_rate}},\n\t\t\t\t\t\t\"TaxEffectiveDate\": \"{{_now}}\",\n\t\t\t\t\t\t\"OrderItemId\": \"@{refGroup2[2].id}\"\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t},\n\t\t{\n\t\t\t\"method\": \"PATCH\",\n\t\t\t\"url\": \"/services/data/v{{version}}/sobjects/Order/@{refOrder.id}\",\n\t\t\t\"referenceId\": \"refUpdateOrder\",\n\t\t\t\"body\": {\n\t\t\t\t\"Status\": \"Activated\"\n\t\t\t}\n\t\t}\n\t]\n}"
+								},
+								"url": {
+									"raw": "{{_instance_url}}/services/data/v{{version}}/composite",
+									"host": [
+										"{{_instance_url}}"
+									],
+									"path": [
+										"services",
+										"data",
+										"v{{version}}",
+										"composite"
+									]
+								}
+							},
+							"response": []
+						}
+					],
+					"description": "# Order Placement - Use case 5\n\nThis folder contains the required API calls to insert an order.\n\n## Use case details\n\nThis use case covers the following details:\n\n1.  One single order insertion\n2.  Reuse the account previously created in the setup\n3.  One single order delivery group, along with its order delivery method\n4.  Reuse the two products previously created in the setup, within the same order delivery group\n5.  No promotions\n6.  Reserve inventory against the location configured, which need to exist on the org and on OCI"
 				}
 			]
 		},
